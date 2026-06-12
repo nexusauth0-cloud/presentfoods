@@ -53,8 +53,9 @@ export const api = {
     get: () => request('/wallet'),
     initialize: (amount: number) => request('/wallet/initialize', { method: 'POST', body: JSON.stringify({ amount }) }),
     verify: (ref: string) => request(`/wallet/verify/${ref}`),
-    pay: (amount: number, email: string, metadata?: any) => request('/wallet/pay', { method: 'POST', body: JSON.stringify({ amount, email, metadata }) }),
-    verifyPay: (ref: string) => request(`/wallet/pay/verify/${ref}`),
+  },
+  payments: {
+    initialize: (email: string, amount: number, callbackUrl?: string) => request('/payments/initialize', { method: 'POST', body: JSON.stringify({ email, amount, callbackUrl }) }),
   },
   admin: {
     createMeal: (data: any) => request('/admin/meals', { method: 'POST', body: JSON.stringify(data) }),

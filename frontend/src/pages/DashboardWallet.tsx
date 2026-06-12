@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiDollarSign, FiArrowUp, FiClock } from 'react-icons/fi';
+import { FiArrowUp, FiClock } from 'react-icons/fi';
 import { api } from '../api/client';
 
 interface Transaction {
@@ -9,14 +9,6 @@ interface Transaction {
   description: string;
   createdAt: string;
 }
-
-declare global {
-  interface Window {
-    PaystackPop: any;
-  }
-}
-
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxx';
 
 export default function DashboardWallet() {
   const [balance, setBalance] = useState(0);
@@ -30,31 +22,32 @@ export default function DashboardWallet() {
       setBalance(data.balance);
       setTransactions(data.transactions);
     }).catch(() => {}).finally(() => setLoading(false));
+
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('reference') || params.get('trxref');
+    if (reference) {
+      api.wallet.verify(reference).then(res => {
+        setBalance(res.balance);
+        return api.wallet.get();
+      }).then(res => {
+        setBalance(res.balance);
+        setTransactions(res.transactions);
+      }).catch(() => {});
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
-  const handleTopUp = () => {
+  const handleTopUp = async () => {
     const amount = parseInt(topUpAmount);
     if (!amount || amount < 100) return;
     setProcessing(true);
-
-    api.wallet.initialize(amount).then(data => {
-      const handler = window.PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY,
-        reference: data.reference,
-        callback: () => {
-          api.wallet.verify(data.reference).then(res => {
-            setBalance(res.balance);
-            setTopUpAmount('');
-            return api.wallet.get();
-          }).then(res => {
-            setBalance(res.balance);
-            setTransactions(res.transactions);
-          }).catch(() => {});
-        },
-        onClose: () => {},
-      });
-      handler.openIframe();
-    }).catch(() => {}).finally(() => setProcessing(false));
+    try {
+      const callbackUrl = `${window.location.origin}/dashboard/wallet`;
+      const data = await api.payments.initialize('customer@presentfoods.ng', amount, callbackUrl);
+      window.location.href = data.authorization_url;
+    } catch {
+      setProcessing(false);
+    }
   };
 
   if (loading) return <div className="flex justify-center py-16"><span className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>;
