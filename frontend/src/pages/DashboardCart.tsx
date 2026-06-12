@@ -15,7 +15,6 @@ export default function DashboardCart() {
   const [deliveryAddress, setDeliveryAddress] = useState<Partial<Address> | null>(null);
   const [addressForm, setAddressForm] = useState<Partial<Address>>({ label: 'Home', street: '', city: '', state: '', phone: '' });
   const [placing, setPlacing] = useState(false);
-  const [whatsappLink, setWhatsappLink] = useState('');
   const [error, setError] = useState('');
 
   const discount = 0;
@@ -43,7 +42,6 @@ export default function DashboardCart() {
         customerEmail,
         customerPhone: deliveryAddress.phone,
       });
-      setWhatsappLink(data.whatsappLink || '');
       setStep('done');
       clearCart();
     } catch (err: any) {
@@ -60,11 +58,6 @@ export default function DashboardCart() {
         </div>
         <h2 className="text-2xl font-bold text-neutral-800">Order Placed!</h2>
         <p className="text-gray-500 text-sm">Your order has been received. The admin will process it shortly.</p>
-        {whatsappLink && (
-          <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="inline-block px-6 py-3 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition-all text-sm">
-            Contact Admin on WhatsApp
-          </a>
-        )}
         <div className="flex gap-3 justify-center">
           <button onClick={() => navigate('/dashboard/browse')} className="px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary-dark transition-all text-sm">Order More</button>
           <button onClick={() => navigate('/dashboard/orders')} className="px-6 py-3 bg-warm text-primary rounded-full font-semibold hover:bg-warm-dark transition-all text-sm">View Orders</button>

@@ -4,7 +4,7 @@ const { authMiddleware } = require('../middleware/auth');
 const db = require('../db');
 
 const router = Router();
-const ADMIN_PHONE = process.env.ADMIN_PHONE || '2348082563629';
+const ADMIN_PHONES = (process.env.ADMIN_PHONE || '2348082563629,2347080989517').split(',').map(s => s.trim());
 
 router.get('/', authMiddleware, (req, res) => {
   try {
@@ -53,13 +53,8 @@ router.post('/', authMiddleware, (req, res) => {
       insertNotif.run(adminNotifId + '-' + admin.id, admin.id, 'admin_order', 'New Order', adminNotifMsg);
     }
 
-    // Build WhatsApp deep link for admin
-    const orderSummary = `Order ${id}%0aCustomer: ${customerName}%0aPhone: ${customerPhone || deliveryAddress.phone}%0aItems: ${itemSummary}%0aTotal: ₦${(finalTotal || total).toLocaleString()}%0aAddress: ${deliveryAddress.street}, ${deliveryAddress.city}, ${deliveryAddress.state}`;
-    const whatsappLink = `https://wa.me/${ADMIN_PHONE}?text=${orderSummary}`;
-
     res.status(201).json({
       order: { id, items, total, discount, finalTotal: finalTotal || total, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone, status: 'pending', createdAt: now },
-      whatsappLink,
     });
   } catch {
     res.status(500).json({ error: 'Server error' });
