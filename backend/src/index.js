@@ -39,4 +39,6 @@ app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
+app.use('/api/*', (_req, res) => res.status(404).json({ error: 'API route not found' }));
+
 app.listen(PORT, () => console.log(`Present Foods API running on port ${PORT}`));
