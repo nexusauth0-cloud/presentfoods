@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: present-foods-api
+    env: node
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_VERSION
+        value: 18
