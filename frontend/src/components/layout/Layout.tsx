@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { FiHome, FiGrid, FiShoppingBag, FiHeart, FiDollarSign, FiMapPin, FiUser, FiBell, FiMenu, FiX, FiLogOut, FiChevronLeft, FiChevronRight, FiShoppingCart, FiShield } from 'react-icons/fi';
+import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { FiHome, FiGrid, FiShoppingBag, FiHeart, FiDollarSign, FiMapPin, FiUser, FiBell, FiMenu, FiLogOut, FiChevronLeft, FiChevronRight, FiShoppingCart, FiShield } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { api } from '../../api/client';
@@ -18,6 +18,18 @@ export default function Layout() {
     api.notifications.unreadCount().then(data => setNotifCount(data.count)).catch(() => {});
   }, [location.pathname]);
 
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    const handler = () => {
+      if (window.confirm('Are you sure you want to logout?')) logout();
+      else window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [logout]);
+
+  if (!isLoggedIn) return <Navigate to="/" replace />;
+
   const sidebarLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: <FiHome className="w-5 h-5" /> },
     { name: 'Browse', path: '/dashboard/browse', icon: <FiGrid className="w-5 h-5" /> },
@@ -33,18 +45,6 @@ export default function Layout() {
       { name: 'Admin Orders', path: '/dashboard/admin/orders', icon: <FiShield className="w-5 h-5" /> },
     ] : []),
   ];
-
-  if (!isLoggedIn) return <Navigate to="/" replace />;
-
-  useEffect(() => {
-    window.history.pushState(null, '', window.location.href);
-    const handler = () => {
-      if (window.confirm('Are you sure you want to logout?')) logout();
-      else window.history.pushState(null, '', window.location.href);
-    };
-    window.addEventListener('popstate', handler);
-    return () => window.removeEventListener('popstate', handler);
-  }, [logout]);
 
   return (
     <div className="min-h-screen bg-neutral-50 flex">

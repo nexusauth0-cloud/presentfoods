@@ -114,6 +114,9 @@ export default function DashboardCart() {
                     <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-medium">₦{total.toLocaleString()}</span></div>
                     {discount > 0 && <div className="flex justify-between"><span className="text-gray-500">Discount</span><span className="font-medium text-green-600">-₦{discount.toLocaleString()}</span></div>}
                     <div className="border-t pt-2 flex justify-between"><span className="font-bold">Total</span><span className="font-bold text-primary text-lg">₦{finalTotal.toLocaleString()}</span></div>
+                    <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 text-center font-medium">
+                      Pay on Delivery — no online payment required
+                    </div>
                   </div>
               </div>
               <button onClick={() => setStep('details')} className="w-full py-3.5 bg-primary text-white font-semibold rounded-full hover:bg-primary-dark transition-all shadow-md">

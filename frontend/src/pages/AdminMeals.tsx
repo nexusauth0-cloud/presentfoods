@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiGrid, FiX, FiCheck } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +18,7 @@ export default function AdminMeals() {
   if (!isAdmin) return <div className="text-center py-16 text-gray-500">Admin access required.</div>;
 
   const load = () => api.meals.list().then(d => setMeals(d.meals)).catch(() => {}).finally(() => setLoading(false));
-  useState(() => load());
+  useEffect(() => { load(); }, []);
 
   const resetForm = () => { setForm({ name: '', description: '', price: 0, category: 'Main Dishes', image: '', discount: 0, isNew: 0 }); setEditing(null); setShowForm(false); };
 

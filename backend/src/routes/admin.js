@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { v4: uuidv4 } = require('uuid');
 const { adminMiddleware } = require('../middleware/admin');
 const db = require('../db');
 
@@ -26,10 +27,10 @@ router.put('/meals/:id', adminMiddleware, (req, res) => {
     if (!existing) { res.status(404).json({ error: 'Meal not found' }); return; }
     const { name, description, price, originalPrice, category, image, rating, discount, isNew } = req.body;
     db.prepare('UPDATE meals SET name=?, description=?, price=?, originalPrice=?, category=?, image=?, rating=?, discount=?, isNew=? WHERE id=?')
-      .run(name || existing.name, description || existing.description, price || existing.price,
+      .run(name || existing.name, description || existing.description, price != null ? price : existing.price,
         originalPrice !== undefined ? originalPrice : existing.originalPrice,
         category || existing.category, image || existing.image,
-        rating || existing.rating, discount !== undefined ? discount : existing.discount,
+        rating != null ? rating : existing.rating, discount !== undefined ? discount : existing.discount,
         isNew !== undefined ? (isNew ? 1 : 0) : existing.isNew, req.params.id);
     const meal = db.prepare('SELECT * FROM meals WHERE id = ?').get(req.params.id);
     res.json({ meal });
@@ -60,7 +61,6 @@ router.put('/orders/:id/status', adminMiddleware, (req, res) => {
     if (!existing) { res.status(404).json({ error: 'Order not found' }); return; }
     db.prepare("UPDATE orders SET status = ?, updatedAt = datetime('now') WHERE id = ?").run(status, req.params.id);
     // Notify user
-    const { v4: uuidv4 } = require('uuid');
     const nid = uuidv4();
     db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)')
       .run(nid, existing.userId, 'order', 'Order Updated', `Your order ${req.params.id} is now ${status.replace(/_/g, ' ')}.`);

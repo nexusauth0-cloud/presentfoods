@@ -1,5 +1,4 @@
 const { Router } = require('express');
-const { v4: uuidv4 } = require('uuid');
 const { authMiddleware } = require('../middleware/auth');
 const db = require('../db');
 
@@ -14,18 +13,18 @@ router.get('/', authMiddleware, (req, res) => {
   }
 });
 
-router.put('/:id/read', authMiddleware, (req, res) => {
+router.put('/read-all', authMiddleware, (req, res) => {
   try {
-    db.prepare('UPDATE notifications SET read = 1 WHERE id = ? AND userId = ?').run(req.params.id, req.userId);
+    db.prepare('UPDATE notifications SET read = 1 WHERE userId = ?').run(req.userId);
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.put('/read-all', authMiddleware, (req, res) => {
+router.put('/:id/read', authMiddleware, (req, res) => {
   try {
-    db.prepare('UPDATE notifications SET read = 1 WHERE userId = ?').run(req.userId);
+    db.prepare('UPDATE notifications SET read = 1 WHERE id = ? AND userId = ?').run(req.params.id, req.userId);
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Server error' });

@@ -25,8 +25,13 @@ export default function DashboardBrowseDetail() {
     if (!meal) return;
     addItem(meal);
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
   };
+
+  useEffect(() => {
+    if (!added) return;
+    const t = setTimeout(() => setAdded(false), 2000);
+    return () => clearTimeout(t);
+  }, [added]);
 
   const handleToggleFav = async () => {
     if (!meal) return;

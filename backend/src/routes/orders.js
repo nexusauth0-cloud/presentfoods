@@ -4,7 +4,6 @@ const { authMiddleware } = require('../middleware/auth');
 const db = require('../db');
 
 const router = Router();
-const ADMIN_PHONES = (process.env.ADMIN_PHONE || '2348082563629,2347080989517').split(',').map(s => s.trim());
 
 router.get('/', authMiddleware, (req, res) => {
   try {
@@ -35,8 +34,9 @@ router.post('/', authMiddleware, (req, res) => {
     const id = 'ORD-' + Date.now().toString().slice(-6);
     const now = new Date().toISOString();
 
+    const ft = finalTotal != null ? finalTotal : total;
     db.prepare(`INSERT INTO orders (id, userId, items, total, discount, finalTotal, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(id, req.userId, JSON.stringify(items), total || 0, discount || 0, finalTotal || total, JSON.stringify(deliveryAddress), deliveryNote || '', customerName, customerEmail || '', customerPhone || '');
+      .run(id, req.userId, JSON.stringify(items), total || 0, discount || 0, ft, JSON.stringify(deliveryAddress), deliveryNote || '', customerName, customerEmail || '', customerPhone || '');
 
     // Notify user
     const userNotifId = uuidv4();
@@ -47,14 +47,14 @@ router.post('/', authMiddleware, (req, res) => {
     // Notify all admin users
     const admins = db.prepare('SELECT id FROM users WHERE role = ?').all('admin');
     const adminNotifId = uuidv4();
-    const adminNotifMsg = `New order ${id} from ${customerName} — ₦${(finalTotal || total).toLocaleString()}`;
+    const adminNotifMsg = `New order ${id} from ${customerName} — ₦${ft.toLocaleString()}`;
     const insertNotif = db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)');
     for (const admin of admins) {
       insertNotif.run(adminNotifId + '-' + admin.id, admin.id, 'admin_order', 'New Order', adminNotifMsg);
     }
 
     res.status(201).json({
-      order: { id, items, total, discount, finalTotal: finalTotal || total, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone, status: 'pending', createdAt: now },
+      order: { id, items, total, discount, finalTotal: ft, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone, status: 'pending', createdAt: now },
     });
   } catch {
     res.status(500).json({ error: 'Server error' });

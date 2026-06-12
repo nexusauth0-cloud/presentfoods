@@ -1,7 +1,9 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { MdRestaurant } from 'react-icons/md';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/api`
+  : '/api';
 
 export default function ServerWakeup({ children }: { children: ReactNode }) {
   const [awake, setAwake] = useState(false);
