@@ -1,0 +1,11 @@
+{
+  "name": "present-foods-v2",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"front,back\" -c \"blue,green\" \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "build": "npm run build --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
