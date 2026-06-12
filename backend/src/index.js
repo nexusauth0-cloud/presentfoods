@@ -9,7 +9,6 @@ const favoriteRoutes = require('./routes/favorites');
 const addressRoutes = require('./routes/addresses');
 const notificationRoutes = require('./routes/notifications');
 const walletRoutes = require('./routes/wallet');
-const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
@@ -34,7 +33,6 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/wallet', walletRoutes);
-app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

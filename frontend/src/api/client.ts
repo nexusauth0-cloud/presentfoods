@@ -53,11 +53,6 @@ export const api = {
   },
   wallet: {
     get: () => request('/wallet'),
-    initialize: (amount: number) => request('/wallet/initialize', { method: 'POST', body: JSON.stringify({ amount }) }),
-    verify: (ref: string) => request(`/wallet/verify/${ref}`),
-  },
-  payments: {
-    initialize: (email: string, amount: number, callbackUrl?: string) => request('/payments/initialize', { method: 'POST', body: JSON.stringify({ email, amount, callbackUrl }) }),
   },
   admin: {
     createMeal: (data: any) => request('/admin/meals', { method: 'POST', body: JSON.stringify(data) }),
