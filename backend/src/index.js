@@ -11,12 +11,14 @@ const notificationRoutes = require('./routes/notifications');
 const walletRoutes = require('./routes/wallet');
 const adminRoutes = require('./routes/admin');
 
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174').split(',').map(s => s.trim());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Rate limiting on auth endpoints
 const authLimiter = rateLimit({

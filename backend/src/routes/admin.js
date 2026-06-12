@@ -1,14 +1,26 @@
 const { Router } = require('express');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const path = require('path');
 const { adminMiddleware } = require('../middleware/admin');
 const db = require('../db');
 
 const router = Router();
 
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, '..', '..', 'uploads'),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2) + ext);
+  }
+});
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+
 // Meals CRUD
-router.post('/meals', adminMiddleware, (req, res) => {
+router.post('/meals', adminMiddleware, upload.single('image'), (req, res) => {
   try {
-    const { name, description, price, originalPrice, category, image, rating, discount, isNew } = req.body;
+    const { name, description, price, originalPrice, category, rating, discount, isNew } = req.body;
+    const image = req.file ? `/uploads/${req.file.filename}` : req.body.image;
     if (!name || !description || !price || !category || !image) {
       res.status(400).json({ error: 'Name, description, price, category, and image are required' });
       return;
@@ -21,15 +33,16 @@ router.post('/meals', adminMiddleware, (req, res) => {
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
 
-router.put('/meals/:id', adminMiddleware, (req, res) => {
+router.put('/meals/:id', adminMiddleware, upload.single('image'), (req, res) => {
   try {
     const existing = db.prepare('SELECT * FROM meals WHERE id = ?').get(req.params.id);
     if (!existing) { res.status(404).json({ error: 'Meal not found' }); return; }
-    const { name, description, price, originalPrice, category, image, rating, discount, isNew } = req.body;
+    const { name, description, price, originalPrice, category, rating, discount, isNew } = req.body;
+    const image = req.file ? `/uploads/${req.file.filename}` : (req.body.image || existing.image);
     db.prepare('UPDATE meals SET name=?, description=?, price=?, originalPrice=?, category=?, image=?, rating=?, discount=?, isNew=? WHERE id=?')
       .run(name || existing.name, description || existing.description, price != null ? price : existing.price,
         originalPrice !== undefined ? originalPrice : existing.originalPrice,
-        category || existing.category, image || existing.image,
+        category || existing.category, image,
         rating != null ? rating : existing.rating, discount !== undefined ? discount : existing.discount,
         isNew !== undefined ? (isNew ? 1 : 0) : existing.isNew, req.params.id);
     const meal = db.prepare('SELECT * FROM meals WHERE id = ?').get(req.params.id);

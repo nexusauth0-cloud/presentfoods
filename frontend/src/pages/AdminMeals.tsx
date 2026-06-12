@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiGrid, FiX, FiCheck } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiGrid, FiX, FiCheck, FiUpload } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { Meal } from '../types';
@@ -8,11 +8,13 @@ import { Meal } from '../types';
 export default function AdminMeals() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Meal | null>(null);
-  const [form, setForm] = useState<Partial<Meal>>({ name: '', description: '', price: 0, category: 'Main Dishes', image: '', discount: 0, isNew: 0 });
+  const [form, setForm] = useState<any>({ name: '', description: '', price: 0, category: 'Main Dishes', image: '', discount: 0, isNew: 0 });
+  const [preview, setPreview] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   if (!isAdmin) return <div className="text-center py-16 text-gray-500">Admin access required.</div>;
@@ -20,10 +22,23 @@ export default function AdminMeals() {
   const load = () => api.meals.list().then(d => setMeals(d.meals)).catch(() => {}).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);
 
-  const resetForm = () => { setForm({ name: '', description: '', price: 0, category: 'Main Dishes', image: '', discount: 0, isNew: 0 }); setEditing(null); setShowForm(false); };
+  const resetForm = () => {
+    setForm({ name: '', description: '', price: 0, category: 'Main Dishes', image: '', discount: 0, isNew: 0 });
+    setPreview('');
+    setEditing(null);
+    setShowForm(false);
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setForm({ ...form, imageFile: file, image: '' });
+      setPreview(URL.createObjectURL(file));
+    }
+  };
 
   const save = async () => {
-    if (!form.name || !form.description || !form.price || !form.image) return;
+    if (!form.name || !form.description || !form.price || (!form.image && !form.imageFile)) return;
     setSaving(true);
     try {
       if (editing) {
@@ -109,7 +124,25 @@ export default function AdminMeals() {
                 </select>
                 <input type="number" placeholder="Discount %" value={form.discount || 0} onChange={e => setForm({ ...form, discount: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
-              <input type="text" placeholder="Image URL *" value={form.image || ''} onChange={e => setForm({ ...form, image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 px-4 py-2 border border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary hover:text-primary transition-all">
+                    <FiUpload className="w-4 h-4" /> Upload Image
+                  </button>
+                  <span className="text-xs text-gray-400">or paste URL</span>
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                {preview ? (
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200">
+                    <img src={preview} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ) : form.image ? (
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200">
+                    <img src={form.image} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ) : null}
+                <input type="text" placeholder="Image URL *" value={form.image || ''} onChange={e => setForm({ ...form, image: e.target.value, imageFile: undefined })} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={!!form.isNew} onChange={e => setForm({ ...form, isNew: e.target.checked ? 1 : 0 })} className="rounded text-primary focus:ring-primary" />
                 <span>Mark as New</span>

@@ -16,6 +16,16 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
   return data;
 }
 
+async function uploadRequest(path: string, method: string, formData: FormData): Promise<any> {
+  const headers: Record<string, string> = {};
+  const t = token();
+  if (t) headers['Authorization'] = `Bearer ${t}`;
+  const res = await fetch(`${BASE}${path}`, { method, body: formData, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
 export const api = {
   auth: {
     login: (email: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
@@ -55,8 +65,24 @@ export const api = {
     get: () => request('/wallet'),
   },
   admin: {
-    createMeal: (data: any) => request('/admin/meals', { method: 'POST', body: JSON.stringify(data) }),
-    updateMeal: (id: string, data: any) => request(`/admin/meals/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    createMeal: (data: any) => {
+      if (data.imageFile) {
+        const fd = new FormData();
+        Object.entries(data).forEach(([k, v]) => { if (k !== 'imageFile') fd.append(k, String(v ?? '')); });
+        fd.append('image', data.imageFile);
+        return uploadRequest('/admin/meals', 'POST', fd);
+      }
+      return request('/admin/meals', { method: 'POST', body: JSON.stringify(data) });
+    },
+    updateMeal: (id: string, data: any) => {
+      if (data.imageFile) {
+        const fd = new FormData();
+        Object.entries(data).forEach(([k, v]) => { if (k !== 'imageFile') fd.append(k, String(v ?? '')); });
+        fd.append('image', data.imageFile);
+        return uploadRequest(`/admin/meals/${id}`, 'PUT', fd);
+      }
+      return request(`/admin/meals/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    },
     deleteMeal: (id: string) => request(`/admin/meals/${id}`, { method: 'DELETE' }),
     listOrders: () => request('/admin/orders'),
     updateOrderStatus: (id: string, status: string) => request(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
