@@ -2,7 +2,8 @@
   "name": "present-foods-v2-backend",
   "private": true,
   "scripts": {
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
