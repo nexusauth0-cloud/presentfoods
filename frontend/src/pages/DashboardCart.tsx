@@ -18,7 +18,7 @@ export default function DashboardCart() {
   const [whatsappLink, setWhatsappLink] = useState('');
   const [error, setError] = useState('');
 
-  const discount = total * 0.2;
+  const discount = 0;
   const finalTotal = total - discount;
 
   const saveAddress = () => {
@@ -117,11 +117,11 @@ export default function DashboardCart() {
             <>
               <div className="bg-white rounded-2xl p-5 shadow-sm">
                 <h3 className="font-semibold text-neutral-800 mb-4">Order Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-medium">₦{total.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Discount (20%)</span><span className="font-medium text-green-600">-₦{discount.toLocaleString()}</span></div>
-                  <div className="border-t pt-2 flex justify-between"><span className="font-bold">Total</span><span className="font-bold text-primary text-lg">₦{finalTotal.toLocaleString()}</span></div>
-                </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-medium">₦{total.toLocaleString()}</span></div>
+                    {discount > 0 && <div className="flex justify-between"><span className="text-gray-500">Discount</span><span className="font-medium text-green-600">-₦{discount.toLocaleString()}</span></div>}
+                    <div className="border-t pt-2 flex justify-between"><span className="font-bold">Total</span><span className="font-bold text-primary text-lg">₦{finalTotal.toLocaleString()}</span></div>
+                  </div>
               </div>
               <button onClick={() => setStep('details')} className="w-full py-3.5 bg-primary text-white font-semibold rounded-full hover:bg-primary-dark transition-all shadow-md">
                 Continue
@@ -171,7 +171,7 @@ export default function DashboardCart() {
                 <h3 className="font-semibold text-neutral-800 mb-4">Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-medium">₦{total.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Discount</span><span className="font-medium text-green-600">-₦{discount.toLocaleString()}</span></div>
+                  {discount > 0 && <div className="flex justify-between"><span className="text-gray-500">Discount</span><span className="font-medium text-green-600">-₦{discount.toLocaleString()}</span></div>}
                   <div className="border-t pt-2 flex justify-between"><span className="font-bold">Total</span><span className="font-bold text-primary">₦{finalTotal.toLocaleString()}</span></div>
                 </div>
               </div>
