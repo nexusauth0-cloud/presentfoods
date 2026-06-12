@@ -11,3 +11,5 @@ services:
         value: 10000
       - key: NODE_VERSION
         value: 18
+      - key: ADMIN_PHONE
+        value: 2348082563629

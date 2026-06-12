@@ -4,7 +4,7 @@ const { authMiddleware } = require('../middleware/auth');
 const db = require('../db');
 
 const router = Router();
-const ADMIN_PHONE = process.env.ADMIN_PHONE || '07080989517';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '2348082563629';
 
 router.get('/', authMiddleware, (req, res) => {
   try {
