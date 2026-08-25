@@ -11,5 +11,7 @@ services:
         value: 10000
       - key: NODE_VERSION
         value: 18
-      - key: ADMIN_PHONE
-        value: 2348082563629,2347080989517
+      # Required: the server refuses to start without it.
+      # Set the actual value in the Render dashboard — never in this file.
+      - key: JWT_SECRET
+        sync: false

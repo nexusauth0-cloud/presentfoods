@@ -100,7 +100,7 @@ npx vite                # starts on :5173
 | Variable          | Required | Default                        | Description                                   |
 | ----------------- | -------- | ------------------------------ | --------------------------------------------- |
 | `PORT`            | No       | `5000`                         | Server port                                   |
-| `JWT_SECRET`      | Yes in production | Hardcoded dev fallback (`fallback-secret`) | JWT signing secret — always set a strong random value when deployed |
+| `JWT_SECRET`      | **Yes**  | — (server exits if missing)    | JWT signing secret — use a long random value |
 | `ADMIN_CODE`      | No       | *(unset)*                      | Code users enter at signup to become an admin; if unset, admin signups are effectively disabled |
 | `ALLOWED_ORIGINS` | No       | `http://localhost:5173`        | Comma-separated CORS origins                  |
 
@@ -257,7 +257,7 @@ Honest overview of the security posture — what is in place, and what to know b
 - **Passwords** are hashed with bcrypt (10 salt rounds); JWTs expire after 7 days
 - **Role-based middleware** protects all admin endpoints server-side, not just UI routes
 - **Rate limiting** is applied to auth endpoints (20 requests / 15 minutes)
-- **`JWT_SECRET` fallback**: if the env var is missing, tokens are signed with a hardcoded development secret. This is convenient locally but unsafe — always set a strong random secret in production
+- **`JWT_SECRET` is required** — the server refuses to start when it is missing, so authentication can never silently run with a predictable fallback. Set it in your `.env` locally and in your hosting dashboard in production; never commit it
 - **Admin signups** require `ADMIN_CODE`; when the variable is unset, no submitted code matches, so self-service admin registration is effectively disabled
 - **Meal images** are uploaded to the local filesystem — fine for demos; use object storage with signed URLs for production
 - Known limitation: uploaded images are served without per-user access control (meal images are public by design)

@@ -6,7 +6,8 @@ const db = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+// Guaranteed to exist: src/index.js refuses to start without JWT_SECRET.
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function createNotification(userId, type, title, message) {
   const id = uuidv4();
