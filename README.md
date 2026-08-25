@@ -1,5 +1,7 @@
 # Present Foods 🍛
 
+[![CI](https://github.com/nexusauth0-cloud/presentfoods/actions/workflows/ci.yml/badge.svg)](https://github.com/nexusauth0-cloud/presentfoods/actions/workflows/ci.yml)
+
 A full-stack food ordering platform with role-based routing, real order management, and a warm Nigerian-inspired UI.
 
 **Live Demo:** [https://presentfoods.vercel.app](https://presentfoods.vercel.app)
