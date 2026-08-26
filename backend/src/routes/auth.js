@@ -21,6 +21,10 @@ router.post('/signup', (req, res) => {
       res.status(400).json({ error: 'Name, email, and password are required' });
       return;
     }
+    if (typeof password !== 'string' || password.length < 8) {
+      res.status(400).json({ error: 'Password must be at least 8 characters' });
+      return;
+    }
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
     if (existing) {
       res.status(409).json({ error: 'An account with this email already exists' });
@@ -29,7 +33,7 @@ router.post('/signup', (req, res) => {
     const id = uuidv4();
     const hashed = bcrypt.hashSync(password, 10);
     const adminCode = req.body.adminCode || '';
-    const role = adminCode === process.env.ADMIN_CODE ? 'admin' : 'user';
+    const role = adminCode && adminCode === process.env.ADMIN_CODE ? 'admin' : 'user';
     db.prepare('INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)').run(id, name, email.toLowerCase(), hashed, role);
 
     // Welcome notification

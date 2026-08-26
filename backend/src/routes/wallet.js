@@ -51,9 +51,27 @@ router.post('/initialize', authMiddleware, async (req, res) => {
 // Verify Paystack transaction
 router.get('/verify/:reference', authMiddleware, async (req, res) => {
   try {
-    // Check if already processed
-    const existing = db.prepare('SELECT * FROM wallet_transactions WHERE description = ?').get(`paystack:${req.params.reference}`);
-    if (existing) { res.json({ success: true, balance: getBalance(req.userId) }); return; }
+    const reference = `paystack:${req.params.reference}`;
+
+    const verifyAndCredit = db.transaction(() => {
+      // Idempotent: check if already processed within the transaction
+      const existing = db.prepare('SELECT * FROM wallet_transactions WHERE description = ?').get(reference);
+      if (existing) return { alreadyProcessed: true };
+
+      const response = fetch(`https://api.paystack.co/transaction/verify/${req.params.reference}`, {
+        headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
+      });
+      // Note: fetch is async but the transaction callback is synchronous.
+      // We handle the async part outside the transaction.
+      return { alreadyProcessed: false };
+    });
+
+    // Check idempotency first (outside transaction for the async fetch)
+    const existing = db.prepare('SELECT * FROM wallet_transactions WHERE description = ?').get(reference);
+    if (existing) {
+      res.json({ success: true, balance: getBalance(req.userId) });
+      return;
+    }
 
     const response = await fetch(`https://api.paystack.co/transaction/verify/${req.params.reference}`, {
       headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
@@ -66,8 +84,16 @@ router.get('/verify/:reference', authMiddleware, async (req, res) => {
 
     const amount = data.data.amount / 100;
     const id = uuidv4();
-    db.prepare('INSERT INTO wallet_transactions (id, userId, type, amount, description) VALUES (?, ?, ?, ?, ?)')
-      .run(id, req.userId, 'credit', amount, `paystack:${req.params.reference}`);
+
+    // Atomic: insert credit and check for duplicate in one transaction
+    const creditWallet = db.transaction(() => {
+      const duplicate = db.prepare('SELECT id FROM wallet_transactions WHERE description = ?').get(reference);
+      if (duplicate) return false;
+      db.prepare('INSERT INTO wallet_transactions (id, userId, type, amount, description) VALUES (?, ?, ?, ?, ?)')
+        .run(id, req.userId, 'credit', amount, reference);
+      return true;
+    });
+    creditWallet();
 
     res.json({ success: true, balance: getBalance(req.userId) });
   } catch {

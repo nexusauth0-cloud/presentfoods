@@ -96,6 +96,14 @@ db.exec(`
   );
 `);
 
+// Performance indexes
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders(userId);
+  CREATE INDEX IF NOT EXISTS idx_wallet_transactions_userId ON wallet_transactions(userId);
+  CREATE INDEX IF NOT EXISTS idx_notifications_userId ON notifications(userId);
+  CREATE INDEX IF NOT EXISTS idx_notifications_userId_read ON notifications(userId, read);
+`);
+
 // Seed meals if table is empty
 const mealCount = db.prepare('SELECT COUNT(*) as c FROM meals').get();
 if (mealCount.c === 0) {

@@ -26,35 +26,58 @@ router.get('/:id', authMiddleware, (req, res) => {
 
 router.post('/', authMiddleware, (req, res) => {
   try {
-    const { items, total, discount, finalTotal, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone } = req.body;
+    const { items, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone } = req.body;
     if (!items?.length || !deliveryAddress || !customerName) {
       res.status(400).json({ error: 'Items, delivery address, and customer name are required' });
       return;
     }
-    const id = 'ORD-' + Date.now().toString().slice(-6);
+
+    // Recalculate totals server-side from database meal prices
+    const mealIds = items.map(i => i.id);
+    const placeholders = mealIds.map(() => '?').join(',');
+    const meals = db.prepare(`SELECT id, price, originalPrice, discount FROM meals WHERE id IN (${placeholders})`).all(...mealIds);
+    const mealMap = Object.fromEntries(meals.map(m => [m.id, m]));
+
+    let total = 0;
+    let discount = 0;
+    for (const item of items) {
+      const meal = mealMap[item.id];
+      if (!meal) {
+        res.status(400).json({ error: `Meal not found: ${item.id}` });
+        return;
+      }
+      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+      const lineTotal = meal.price * qty;
+      total += lineTotal;
+      if (meal.discount) discount += lineTotal * (meal.discount / 100);
+    }
+    const finalTotal = total - discount;
+
+    const id = uuidv4();
     const now = new Date().toISOString();
 
-    const ft = finalTotal != null ? finalTotal : total;
-    db.prepare(`INSERT INTO orders (id, userId, items, total, discount, finalTotal, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(id, req.userId, JSON.stringify(items), total || 0, discount || 0, ft, JSON.stringify(deliveryAddress), deliveryNote || '', customerName, customerEmail || '', customerPhone || '');
+    const createOrder = db.transaction(() => {
+      db.prepare(`INSERT INTO orders (id, userId, items, total, discount, finalTotal, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(id, req.userId, JSON.stringify(items), total, discount, finalTotal, JSON.stringify(deliveryAddress), deliveryNote || '', customerName, customerEmail || '', customerPhone || '');
 
-    // Notify user
-    const userNotifId = uuidv4();
-    const itemSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
-    db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)')
-      .run(userNotifId, req.userId, 'order', 'Order Placed', `Your order ${id} has been received. Items: ${itemSummary}`);
+      // Notify user
+      const userNotifId = uuidv4();
+      const itemSummary = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+      db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)')
+        .run(userNotifId, req.userId, 'order', 'Order Placed', `Your order has been received. Items: ${itemSummary}`);
 
-    // Notify all admin users
-    const admins = db.prepare('SELECT id FROM users WHERE role = ?').all('admin');
-    const adminNotifId = uuidv4();
-    const adminNotifMsg = `New order ${id} from ${customerName} — ₦${ft.toLocaleString()}`;
-    const insertNotif = db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)');
-    for (const admin of admins) {
-      insertNotif.run(adminNotifId + '-' + admin.id, admin.id, 'admin_order', 'New Order', adminNotifMsg);
-    }
+      // Notify all admin users
+      const admins = db.prepare('SELECT id FROM users WHERE role = ?').all('admin');
+      const adminNotifMsg = `New order from ${customerName} — ₦${finalTotal.toLocaleString()}`;
+      const insertNotif = db.prepare('INSERT INTO notifications (id, userId, type, title, message) VALUES (?, ?, ?, ?, ?)');
+      for (const admin of admins) {
+        insertNotif.run(uuidv4(), admin.id, 'admin_order', 'New Order', adminNotifMsg);
+      }
+    });
+    createOrder();
 
     res.status(201).json({
-      order: { id, items, total, discount, finalTotal: ft, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone, status: 'pending', createdAt: now },
+      order: { id, items, total, discount, finalTotal, deliveryAddress, deliveryNote, customerName, customerEmail, customerPhone, status: 'pending', createdAt: now },
     });
   } catch {
     res.status(500).json({ error: 'Server error' });

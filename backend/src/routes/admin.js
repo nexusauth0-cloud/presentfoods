@@ -11,10 +11,18 @@ const storage = multer.diskStorage({
   destination: path.join(__dirname, '..', '..', 'uploads'),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2) + ext);
+    cb(null, uuidv4() + ext);
   }
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIMES.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPEG, PNG, GIF, and WebP images are allowed'));
+  },
+});
 
 // Meals CRUD
 router.post('/meals', adminMiddleware, upload.single('image'), (req, res) => {
@@ -25,7 +33,7 @@ router.post('/meals', adminMiddleware, upload.single('image'), (req, res) => {
       res.status(400).json({ error: 'Name, description, price, category, and image are required' });
       return;
     }
-    const id = 'm' + Date.now().toString().slice(-4);
+    const id = uuidv4();
     db.prepare('INSERT INTO meals (id, name, description, price, originalPrice, category, image, rating, discount, isNew) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(id, name, description, price, originalPrice || null, category, image, rating || 4.5, discount || 0, isNew ? 1 : 0);
     const meal = db.prepare('SELECT * FROM meals WHERE id = ?').get(id);

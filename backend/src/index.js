@@ -24,8 +24,17 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174').split(',').map(s => s.trim());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+// Security headers
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Rate limiting on auth endpoints
 const authLimiter = rateLimit({
@@ -35,8 +44,18 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Rate limiting on order creation
+const orderLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Too many order requests, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/orders', orderLimiter, orderRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/addresses', addressRoutes);
