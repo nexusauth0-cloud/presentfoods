@@ -350,4 +350,10 @@ Honest overview of the security posture — what is in place, and what to know b
 
 ---
 
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
 Built with ❤️ for Nigerian food lovers.
