@@ -92,6 +92,41 @@ A full-stack food ordering platform with role-based routing, real order manageme
 | Uploads    | Multer (local filesystem via `/uploads` static route)                |
 | Deploy     | Vercel (frontend), Render (backend)                                  |
 
+## Order Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant A as Express API
+    participant DB as SQLite
+
+    U->>F: Browse meals
+    F->>A: GET /api/meals
+    A->>DB: SELECT * FROM meals
+    DB-->>A: 12 seeded meals
+    A-->>F: JSON response
+    F-->>U: Meal cards with prices
+
+    U->>F: Add to cart → Checkout
+    F->>A: POST /api/orders (JWT)
+    A->>DB: INSERT order + notify admin
+    DB-->>A: Order created
+    A-->>F: Order confirmation
+
+    U->>F: View orders
+    F->>A: GET /api/orders (JWT)
+    A->>DB: SELECT orders WHERE userId
+    DB-->>A: Order list + status
+    A-->>F: JSON response
+
+    U->>F: Admin updates status
+    F->>A: PATCH /api/admin/orders/:id (JWT)
+    A->>DB: UPDATE status + notify user
+    DB-->>A: Updated
+    A-->>F: Status change
+```
+
 ---
 
 ## Getting Started
