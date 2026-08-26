@@ -23,6 +23,13 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Run tests
+        working-directory: backend
+        env:
+          DB_PATH: /tmp/presentfoods-test.db
+          JWT_SECRET: ci-test-secret-not-used-for-real-traffic
+        run: npm test
+
       - name: Syntax check all backend sources
         working-directory: backend
         run: find src -name '*.js' -type f -print0 | xargs -0 -n1 node --check
