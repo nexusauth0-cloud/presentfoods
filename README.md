@@ -57,6 +57,30 @@ A full-stack food ordering platform with role-based routing, real order manageme
 
 ---
 
+## Product Preview
+
+### Browse Meals
+
+![Present Foods homepage showing meal cards with search, category filters, prices, and ratings](docs/screenshots/home-browse.jpg)
+
+### User Orders
+
+![Order history view with status badges and cancel options](docs/screenshots/orders-user.jpg)
+
+### Admin Dashboard
+
+![Admin panel with order management, status updates, and analytics](docs/screenshots/admin-dashboard.jpg)
+
+### Admin Order Management
+
+![Admin orders list with status filters and bulk actions](docs/screenshots/admin-orders.jpg)
+
+### Mobile Experience
+
+![Responsive mobile view with category carousel and bottom navigation](docs/screenshots/home-mobile.jpg)
+
+---
+
 ## Tech Stack
 
 | Layer      | Technology                                                           |
