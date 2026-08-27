@@ -26,20 +26,28 @@ router.post('/initialize', authMiddleware, async (req, res) => {
     const user = db.prepare('SELECT email FROM users WHERE id = ?').get(req.userId);
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
 
-    const response = await fetch('https://api.paystack.co/transaction/initialize', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: user.email,
-        amount: amount * 100,
-        currency: 'NGN',
-        metadata: { userId: req.userId },
-        callback_url: `${req.protocol}://${req.get('host')}/api/wallet/callback`,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let response;
+    try {
+      response = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          amount: amount * 100,
+          currency: 'NGN',
+          metadata: { userId: req.userId },
+          callback_url: `${req.protocol}://${req.get('host')}/api/wallet/callback`,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     const data = await response.json();
     if (!data.status) { res.status(400).json({ error: data.message || 'Paystack initialization failed' }); return; }
     res.json({ authorization_url: data.data.authorization_url, reference: data.data.reference });
@@ -73,9 +81,17 @@ router.get('/verify/:reference', authMiddleware, async (req, res) => {
       return;
     }
 
-    const response = await fetch(`https://api.paystack.co/transaction/verify/${req.params.reference}`, {
-      headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let response;
+    try {
+      response = await fetch(`https://api.paystack.co/transaction/verify/${req.params.reference}`, {
+        headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     const data = await response.json();
     if (!data.status || data.data.status !== 'success') {
       res.status(400).json({ error: 'Payment verification failed' });
@@ -107,19 +123,27 @@ router.post('/pay', authMiddleware, async (req, res) => {
     const { amount, email, metadata } = req.body;
     if (!amount || amount < 100) { res.status(400).json({ error: 'Amount must be at least ₦100' }); return; }
 
-    const response = await fetch('https://api.paystack.co/transaction/initialize', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email || 'customer@presentfoods.ng',
-        amount: amount * 100,
-        currency: 'NGN',
-        metadata: { ...metadata, userId: req.userId },
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let response;
+    try {
+      response = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email || 'customer@presentfoods.ng',
+          amount: amount * 100,
+          currency: 'NGN',
+          metadata: { ...metadata, userId: req.userId },
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     const data = await response.json();
     if (!data.status) { res.status(400).json({ error: data.message || 'Payment initialization failed' }); return; }
     res.json({ authorization_url: data.data.authorization_url, reference: data.data.reference });
