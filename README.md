@@ -11,7 +11,7 @@ A full-stack food ordering platform with role-based routing, real order manageme
 ## Features
 
 ### Guest Landing Page
-- Hero section with AI-powered food suggestion modal, tagline, and CTA
+- Hero section with a food suggestion modal (randomly selects from a curated recommendation list), tagline, and CTA
 - Dynamic featured meals section pulling from live database
 - Category showcase, How It Works guide, and footer with contact info ("Kwara, Nigeria")
 
@@ -28,7 +28,7 @@ A full-stack food ordering platform with role-based routing, real order manageme
 ### Admin Panel
 - **Manage Meals** — table with add/edit/delete; image upload via file picker or URL; fields for name, description, price, category, discount, new badge
 - **Manage Orders** — view all orders system-wide; update status through pending → confirmed → preparing → out_for_delivery → delivered; users notified automatically on each status change
-- **Users** — list all users; promote/demote admin roles
+- **Users** — the backend exposes user listing and role promotion/demotion endpoints (with admin authorization); a dedicated admin UI page for this is not yet wired up
 
 ### Auth & Security
 - JWT-based authentication with bcrypt password hashing
@@ -210,21 +210,21 @@ presentfoods/
 │   │   ├── context/
 │   │   │   ├── AuthContext.tsx    # Auth state, login/logout/signup
 │   │   │   └── CartContext.tsx    # Cart state (frontend-only)
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   │   ├── Layout.tsx        # Dashboard layout (sidebar + bottom nav)
-│   │   │   │   ├── Sidebar.tsx
-│   │   │   │   ├── MobileBottomNav.tsx
-│   │   │   │   └── PublicLayout.tsx  # Landing page layout
-│   │   │   ├── landing/          # HeroSection, CategoriesSection, etc.
-│   │   │   ├── ServerWakeup.tsx  # Cold-start splash
-│   │   │   ├── PermissionPrompt.tsx
-│   │   │   └── ErrorBoundary.tsx
-│   │   └── pages/
-│   │       ├── Landing.tsx
-│   │       ├── Login.tsx
-│   │       ├── Dashboard*.tsx    # Home, Browse, Cart, Orders, etc.
-│   │       └── Admin*.tsx        # AdminMeals, AdminOrders, AdminUsers
+ │   │   ├── components/
+ │   │   │   ├── layout/
+ │   │   │   │   ├── Layout.tsx        # Dashboard layout (sidebar + bottom nav)
+ │   │   │   │   ├── PublicLayout.tsx  # Public / landing layout
+ │   │   │   │   ├── PublicNavbar.tsx
+ │   │   │   │   └── Footer.tsx
+ │   │   │   ├── landing/          # HeroSection, CategoriesSection, FeaturedMeals, HowItWorks
+ │   │   │   ├── ServerWakeup.tsx  # Cold-start splash
+ │   │   │   ├── PermissionPrompt.tsx
+ │   │   │   └── ErrorBoundary.tsx
+ │   │   └── pages/
+ │   │       ├── LandingPage.tsx
+ │   │       ├── LoginPage.tsx
+ │   │       ├── Dashboard*.tsx    # Home, Browse, Cart, Orders, etc.
+ │   │       └── Admin*.tsx        # AdminMeals, AdminOrders
 │   ├── vercel.json               # SPA rewrites
 │   └── package.json
 └── README.md
@@ -276,7 +276,7 @@ presentfoods/
 | POST   | `/api/addresses`          | Create address           |
 | PUT    | `/api/addresses/:id`      | Update address           |
 | DELETE | `/api/addresses/:id`      | Delete address           |
-| GET    | `/api/wallet`             | Wallet info (static)     |
+| GET    | `/api/wallet`             | Wallet balance and transaction history (from DB) |
 
 ### Admin (admin only)
 | Method | Endpoint                         | Description          |
