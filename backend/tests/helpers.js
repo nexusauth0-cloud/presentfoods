@@ -18,6 +18,9 @@ function loadApp() {
   process.env.DB_PATH = TEST_DB;
   process.env.JWT_SECRET = JWT_SECRET;
   process.env.ALLOWED_ORIGINS = 'http://localhost:5173';
+  // Raise the order rate limit so most tests are deterministic (production stays
+  // at 10/min). Tests that exercise the limit itself set this explicitly first.
+  process.env.ORDER_RATE_LIMIT_MAX ||= '10000';
 
   // Clear ALL cached modules under the backend src/ to get fresh DB connection
   const backendPrefix = path.join(__dirname, '..', 'src');

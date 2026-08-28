@@ -39,7 +39,7 @@ const authLimiter = rateLimit({
 // Rate limiting on order creation
 const orderLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: Number(process.env.ORDER_RATE_LIMIT_MAX) || 10,
   message: { error: 'Too many order requests, please slow down.' },
   standardHeaders: true,
   legacyHeaders: false,

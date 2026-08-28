@@ -33,7 +33,9 @@ router.post('/', authMiddleware, (req, res) => {
     }
 
     // Recalculate totals server-side from database meal prices
-    const mealIds = items.map(i => i.id);
+    // Accept both `id` and `mealId` as the item's meal reference (the web
+    // client sends `mealId`, while some callers send `id`).
+    const mealIds = items.map(i => i.id ?? i.mealId);
     const placeholders = mealIds.map(() => '?').join(',');
     const meals = db.prepare(`SELECT id, price, originalPrice, discount FROM meals WHERE id IN (${placeholders})`).all(...mealIds);
     const mealMap = Object.fromEntries(meals.map(m => [m.id, m]));
@@ -41,9 +43,10 @@ router.post('/', authMiddleware, (req, res) => {
     let total = 0;
     let discount = 0;
     for (const item of items) {
-      const meal = mealMap[item.id];
+      const id = item.id ?? item.mealId;
+      const meal = mealMap[id];
       if (!meal) {
-        res.status(400).json({ error: `Meal not found: ${item.id}` });
+        res.status(400).json({ error: `Meal not found: ${id}` });
         return;
       }
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);

@@ -7,6 +7,8 @@ let app, db, user, token;
 
 before(() => {
   resetTestDb();
+  // Exercise the real order limit (10/min), overriding the test default
+  process.env.ORDER_RATE_LIMIT_MAX = '10';
   app = loadApp();
   db = getDb();
   user = seedUser(db, { email: 'ratelimit-user@test.com' });

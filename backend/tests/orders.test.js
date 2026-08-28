@@ -38,6 +38,32 @@ describe('POST /api/orders', () => {
     assert.equal(res.body.order.status, 'pending');
   });
 
+  it('accepts items sent with mealId (the web client wire contract)', async () => {
+    // Regression: the frontend DashboardCart sends each item with `mealId`
+    // (not `id`). The API previously failed with 400 "Meal not found: undefined"
+    // because it only looked up `item.id`. It must accept `mealId` too.
+    const res = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [
+          { mealId: meal1.id, name: meal1.name, quantity: 2, price: meal1.price, image: 'x.png' },
+          { mealId: meal2.id, name: meal2.name, quantity: 1, price: meal2.price },
+        ],
+        total: 9999,
+        discount: 0,
+        finalTotal: 9999,
+        deliveryAddress: { street: '1 Test Rd', city: 'Lagos', state: 'Lagos', phone: '08000000000' },
+        deliveryNote: 'close to gate',
+        customerName: 'Wire User',
+        customerEmail: 'wire@test.com',
+        customerPhone: '08000000000',
+      });
+    assert.equal(res.status, 201);
+    assert.equal(res.body.order.total, 4500 * 2 + 3000 * 1);
+    assert.equal(res.body.order.customerName, 'Wire User');
+  });
+
   it('rejects order with empty items', async () => {
     const res = await request(app)
       .post('/api/orders')
